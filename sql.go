@@ -11,6 +11,7 @@ import (
 	log "github.com/golang/glog"
 	_ "github.com/kshvakov/clickhouse" // register the ClickHouse driver
 	_ "github.com/lib/pq"              // register the PostgreSQL driver
+	_ "github.com/ibmdb/go_ibm_db"     // register the DB2 driver
 )
 
 // OpenConnection extracts the driver name from the DSN (expected as the URI scheme), adjusts it where necessary (e.g.
@@ -55,6 +56,8 @@ func OpenConnection(ctx context.Context, logContext, dsn string, maxConns, maxId
 	switch driver {
 	case "mysql":
 		dsn = strings.TrimPrefix(dsn, "mysql://")
+	case "go_ibm_db":
+		dsn = strings.TrimPrefix(dsn, driver+"://")
 	case "clickhouse":
 		dsn = "tcp://" + strings.TrimPrefix(dsn, "clickhouse://")
 	}

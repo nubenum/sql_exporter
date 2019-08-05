@@ -1,0 +1,118 @@
+# A collector defining standard metrics for IBM DB2.
+#
+collector_name: db2_standard
+
+# Similar to global.min_interval, but applies to the queries defined by this collector only.
+#min_interval: 0s
+
+metrics:
+  - metric_name: db2_deadlocks
+    type: gauge
+    help: 'Number of deadlocks.'
+    values: [DEADLOCKS]
+    query_ref: db_stats
+  - metric_name: db2_num_locks_held
+    type: gauge
+    help: 'The number of locks currently held.'
+    values: [NUM_LOCKS_HELD]
+    query_ref: db_stats
+  - metric_name: db2_lock_timeouts
+    type: counter
+    help: 'The number of times that a request to lock an object timed out instead of being granted.'
+    values: [LOCK_TIMEOUTS]
+    query_ref: db_stats
+  - metric_name: db2_total_act_time
+    type: counter
+    help: 'The total amount of time spent executing activities. This value is given in milliseconds.'
+    values: [TOTAL_ACT_TIME]
+    query_ref: db_stats
+  - metric_name: db2_act_completed_total
+    type: counter
+    help: 'The total number of coordinator activities at any nesting level that completed successfully.'
+    values: [ACT_COMPLETED_TOTAL]
+    query_ref: db_stats
+  - metric_name: db2_buffer_pool_hit_ratio
+    type: gauge
+    help: 'The local buffer pool hit ratio.'
+    values: [BUFFER_POOL_HIT_RATIO]
+    query_ref: db_stats
+
+  - metric_name: db2_rows_operated
+    type: counter
+    help: 'Number of rows read/inserted/updated/deleted.'
+    key_labels:
+      - TABNAME
+      - TABSCHEMA
+    value_label: operation
+    values: [ROWS_READ, ROWS_INSERTED, ROWS_UPDATED, ROWS_DELETED]
+    query_ref: table_stats
+  - metric_name: db2_table_scans
+    type: counter
+    help: 'Number of table scans.'
+    key_labels:
+      - TABNAME
+      - TABSCHEMA
+    values: [TABLE_SCANS]
+    query_ref: table_stats
+  - metric_name: db2_lock_wait_time
+    type: counter
+    help: 'The total elapsed time spent waiting for locks.'
+    key_labels:
+      - TABNAME
+      - TABSCHEMA
+    values: [LOCK_WAIT_TIME]
+    query_ref: table_stats
+  - metric_name: db2_lock_waits
+    type: counter
+    help: 'The total number of times that applications or connections waited for locks.'
+    key_labels:
+      - TABNAME
+      - TABSCHEMA
+    values: [LOCK_WAITS]
+    query_ref: table_stats
+  - metric_name: db2_lock_escals
+    type: counter
+    help: 'The number of times that locks have been escalated from several row locks to a table lock.'
+    key_labels:
+      - TABNAME
+      - TABSCHEMA
+    values: [LOCK_ESCALS]
+    query_ref: table_stats
+  - metric_name: db2_data_page_hit_ratio
+    type: gauge
+    help: 'The data page hit ratio.'
+    key_labels:
+      - TABNAME
+      - TABSCHEMA
+    values: [DATA_PAGE_HIT_RATIO]
+    query_ref: table_stats
+    
+  - metric_name: db2_memory_used
+    type: gauge
+    help: 'Memory in use by all sets.'
+    values: [MEMORY_USED]
+    query_ref: memory_stats
+  - metric_name: db2_memory_size
+    type: gauge
+    help: 'Total memory set size.'
+    values: [MEMORY_SIZE]
+    query_ref: memory_stats
+
+
+queries:
+  - query_name: db_stats
+    query: |
+      SELECT DEADLOCKS, NUM_LOCKS_HELD, LOCK_TIMEOUTS, TOTAL_ACT_TIME, ACT_COMPLETED_TOTAL,
+      ((pool_data_lbp_pages_found - pool_async_data_lbp_pages_found) / (pool_data_l_reads + pool_temp_data_l_reads)) AS BUFFER_POOL_HIT_RATIO
+      FROM TABLE(MON_GET_DATABASE(NULL))
+  - query_name: table_stats
+    query: |
+      SELECT TABSCHEMA, TABNAME, ROWS_READ, ROWS_INSERTED, ROWS_UPDATED, ROWS_DELETED, TABLE_SCANS, LOCK_WAIT_TIME, LOCK_WAITS, LOCK_ESCALS,
+      (1 - (object_data_p_reads + object_xda_p_reads) / (object_data_l_reads + object_xda_l_reads)) AS DATA_PAGE_HIT_RATIO
+      FROM TABLE(MON_GET_TABLE('', '', NULL))
+      WHERE TABSCHEMA NOT LIKE 'SYS%'
+  - query_name: memory_stats
+    query: |      
+      SELECT SUM(MEMORY_SET_USED) AS MEMORY_USED, SUM(MEMORY_SET_SIZE) AS MEMORY_SIZE
+      FROM TABLE(MON_GET_MEMORY_SET(NULL, NULL, NULL))
+
