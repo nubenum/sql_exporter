@@ -1,4 +1,6 @@
-# Prometheus SQL Exporter [![Build Status](https://travis-ci.org/free/sql_exporter.svg)](https://travis-ci.org/free/sql_exporter) [![Go Report Card](https://goreportcard.com/badge/github.com/free/sql_exporter)](https://goreportcard.com/report/github.com/free/sql_exporter) [![GoDoc](https://godoc.org/github.com/free/sql_exporter?status.svg)](https://godoc.org/github.com/free/sql_exporter) [![Docker Pulls](https://img.shields.io/docker/pulls/githubfree/sql_exporter.svg?maxAge=604800)](https://hub.docker.com/r/githubfree/sql_exporter)
+# Prometheus SQL Exporter for IBM DB2
+
+This fork adapts free's SQL exporter for usage with IBM DB2, using [ibmdb/go_ibm_db](https://github.com/ibmdb/go_ibm_db). You need to build it using make or docker in order to automatically fetch all dependencies.
 
 Database agnostic SQL exporter for [Prometheus](https://prometheus.io).
 
